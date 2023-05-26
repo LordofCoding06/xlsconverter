@@ -1,70 +1,64 @@
-$Verzeichnisverlauf = @()
+$directoryhistory = New-Object System.Collections.Generic.Stack[string]
 
-function Suche-Navigiere-Verzeichnis {
-    param (
-        [Parameter(Mandatory = $true)]
-        [string]$Verzeichnis
-    )
-
-    # Durchsucht die Unterverzeichnisse rekursiv
-    $verzeichnisse = Get-ChildItem -Path $Verzeichnis -Directory
-
-    # Indizierte Ausgabe der Unterverzeichnisse
-    for ($i = 0; $i -lt $verzeichnisse.Count; $i++) {
-        Write-Host "[$i] $($verzeichnisse[$i].FullName)"
-    }
-
-    # Auswahl des Unterverzeichnisses
-    $auswahl = Read-Host "Geben Sie die Indexnummer des gewünschten Unterverzeichnisses ein (oder 'z' zum Zurückkehren, 'q' zum Beenden):"
-
-    if ($auswahl -eq "q") {
-        return
-    }
-
-    if ($auswahl -eq "z") {
-        # Zurück zum vorherigen Verzeichnis
-        if ($Verzeichnisverlauf.Count -gt 0) {
-            $vorherigesVerzeichnis = $Verzeichnisverlauf[$Verzeichnisverlauf.Count - 1]
-            $Verzeichnisverlauf = $Verzeichnisverlauf[0..($Verzeichnisverlauf.Count - 2)]
-            Suche-Navigiere-Verzeichnis -Verzeichnis $vorherigesVerzeichnis
-        } else {
-            Write-Host "Sie befinden sich bereits im obersten Verzeichnis."
-            Suche-Navigiere-Verzeichnis -Verzeichnis $Verzeichnis
-        }
-        return
-    }
-
-    # Validierung der Auswahl
-    if ($auswahl -lt 0 -or $auswahl -ge $verzeichnisse.Count) {
-        Write-Host "Ungültige Auswahl. Bitte geben Sie eine gültige Indexnummer ein."
-        Suche-Navigiere-Verzeichnis -Verzeichnis $Verzeichnis
-        return
-    }
-
-    # Navigieren in das ausgewählte Unterverzeichnis
-    $neuesVerzeichnis = $verzeichnisse[$auswahl].FullName
-    $Verzeichnisverlauf += $Verzeichnis
-    Suche-Navigiere-Verzeichnis -Verzeichnis $neuesVerzeichnis
-}
-
-function Suche-XLS-Dateien {
+function search-navigate-directory {
   param (
     [Parameter(Mandatory = $true)]
-    [string]$Verzeichnis
+    [string]$directory
   )
 
-  # Durchsucht das Verzeichnis nach .xls-Dateien
-  $dateien = Get-ChildItem -Path $Verzeichnis -Filter "*.xls" -File
+  Clear-Host
 
-  if ($dateien.Count -gt 0) {
-    Write-Host "Gefundene .xls-Dateien im Verzeichnis '$Verzeichnis':"
-    $dateien | foreach { Write-Host $_.FullName }
+  search-xls-files -directory $directory
+  $directories = Get-ChildItem -Path $directory -Directory
+
+  for ($i = 0; $i -lt $directories.Count; $i++) {
+    Write-Host "[$i] $($directories[$i].FullName)"
   }
-  else {
-    Write-Host "Nichts gefunen im Verzeichnis:    $Verzeichnis"
+
+  $selection = Read-Host "Enter the index number of the desired subdirectory (or 'z' to go back, 'q' to quit)"
+
+  if ($selection -eq "q") {
+    return
   }
+
+  if ($selection -eq "z") {
+    if ($directoryhistory.Count -gt 0) {
+      $previousdirectory = $directoryhistory.Pop()
+      search-navigate-directory -directory $previousdirectory
+    }
+    else {
+      Write-Host "You are already in the top-level directory."
+      search-navigate-directory -directory $directory
+    }
+    return
+  }
+
+  if ($selection -lt 0 -or $selection -ge $directories.Count) {
+    Write-Host "Invalid selection. Please enter a valid index number."
+    search-navigate-directory -directory $directory
+    return
+  }
+
+  $newdirectory = $directories[$selection].FullName
+  $directoryhistory.Push($directory)
+  search-navigate-directory -directory $newdirectory
 }
 
-Clear-Host
-# Suche-XLS-Dateien -Verzeichnis "Q:\AppTesting\QFTestFrameWork\QFTestDriver\Syrius\CEN_UNI"
-Suche-Navigiere-Verzeichnis -Verzeichnis "Q:\AppTesting\QFTestFrameWork\QFTestDriver\Syrius\CEN_UNI"
+function search-xls-files {
+  param (
+    [Parameter(Mandatory = $true)]
+    [string]$directory
+  )
+
+  Clear-Host
+
+  $files = Get-ChildItem -Path $directory -Filter "*.xls" -File
+
+  if ($files.Count -gt 0) {
+    Write-Host "Found .xls files in directory '$directory':"
+    $files | foreach { Write-Host $_.Name }
+  }
+  else {
+    Write-Host "Nothing found in directory:    $directory"
+  }
+}
