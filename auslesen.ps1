@@ -11,14 +11,11 @@ function Suche-XLS-Dateien {
     Write-Host "Gefundene .xls-Dateien im Verzeichnis '$Verzeichnis':"
     $dateien | foreach { Write-Host $_.FullName }
   }
-
-  # Durchsucht die Unterverzeichnisse
-  $verzeichnisse = Get-ChildItem -Path $Verzeichnis -Directory
-
-  foreach ($verzeichnis in $verzeichnisse) {
-    Suche-XLS-Dateien -Verzeichnis $verzeichnis.FullName
+  else {
+    Write-Host "Nichts gefunen im Verzeichnis:    $Verzeichnis"
   }
 }
 
 # Beispielaufruf
-Suche-XLS-Dateien -Verzeichnis "C:\Pfad\Zum\Verzeichnis"
+Clear-Host
+Suche-XLS-Dateien -Verzeichnis "Q:\AppTesting\QFTestFrameWork\QFTestDriver\Syrius\CEN_UNI"
